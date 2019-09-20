@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.huxin.sboot.dao.IUserMapper">
+
+<!--     <cache></cache> -->
+    
+    <insert id="add" parameterType="User" >
+        insert into t_user(id,username,userpwd,sex,email,createtime,filepath) values (test_seq.nextval,#{name,jdbcType=VARCHAR}
+        ,#{password,jdbcType=VARCHAR},#{sex,jdbcType=VARCHAR},#{email,jdbcType=VARCHAR},to_date(#{regtime,jdbcType=VARCHAR},'yyyy-mm-dd'),#{filepath,jdbcType=VARCHAR})
+    </insert>
+    
+    <select id="getAll" parameterType="User" resultType="User">
+        select t.id,t.username as name,t.userpwd as password from t_user t
+        <where>
+           <if test="name!=null and name!='' ">
+              t.username like '%${name}%'
+           </if>
+        </where>
+    </select>
+    <!-- 分页查询 -->
+    <select id="getAllUser" parameterType="PageBean" resultType="User">
+        select t.id,t.username as name,t.userpwd as password,t.sex,t.email,to_char(t.createtime,'yyyy-mm-dd') regtime,t.filepath from t_user t
+        <where>
+           <if test="map.name!=null and map.name!='' ">
+              t.username like '%${map.name}%'
+           </if>
+        </where>
+    </select>
+    
+    <select id="getObjById" parameterType="String" resultType="User">
+        select t.id,t.username as name,t.userpwd as password,t.moblie,t.email,t.sex,to_char(t.createtime,'yyyy-mm-dd') regtime,t.filepath from t_user t
+        where t.id=#{0}
+    </select>
+    
+    <delete id="del" parameterType="String" >
+        delete t_user t where t.id=#{id}
+    </delete>
+    
+    <update id="update" parameterType="User">
+       update t_user t
+       <set>
+          <if test="name!=null and name!='' ">
+             t.username=#{name}
+          </if>
+          <if test="password!=null and password!='' ">
+             ,t.userpwd=#{password}
+          </if>
+          <if test="sex!=null and sex!='' ">
+             ,t.sex=#{sex}
+          </if>
+          <if test="email!=null and email!='' ">
+             ,t.email=#{email}
+          </if>
+          <if test="regtime!=null and regtime!='' ">
+             ,t.createtime=to_date(#{regtime},'yyyy-mm-dd')
+          </if>
+          <if test="filepath!=null and filepath!='' ">
+             ,t.filepath=#{filepath}
+          </if>
+       </set>
+       <where>
+          t.id=#{id}
+       </where>
+    </update>
+    
+    <select id="queryAllUser" parameterType="Map" resultType="User">
+       select a.id,a.username as name,a.email,a.sex,to_char(a.createtime,'yyyy-mm-dd') regtime from t_user a 
+       <where>
+          <if test="name!=null and name!='' " >
+              a.username like '%${name}%'
+          </if>
+       </where>
+   </select>
+</mapper>

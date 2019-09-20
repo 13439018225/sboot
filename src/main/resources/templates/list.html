@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>userList</title>
+    <link rel="stylesheet" th:href="@{/bootstrap.css}"></link>
+</head>
+<body class="container">
+<br/>
+<h1>用户列表</h1>
+<br/><br/>
+<div class="with:80%">
+    <table class="table table-hover">
+        <thead>
+        <tr>
+            <th>序号</th>
+            <th>id</th>
+            <th>User Name</th>
+            <th>Password</th>
+            <th>操作  <a href="http://www.baidu.com" th:href="@{/topage}" class="btn btn-info">add</a> </th>
+            
+        </tr>
+        </thead>
+        <tbody>
+        <tr  th:each="user,s: ${list}">
+            <td th:text="${s.count}">1</td>
+            <th scope="row" th:text="${user.id}">100</th>
+            <td th:text="${user.name}">张三</td>
+            <td th:text="${user.password}">123</td>
+            <td><a th:href="@{/getObjById(id=${user.id})}">修改</a> <a th:href="@{/delete(id=${user.id})}">删除</a></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>主页面</title>
+    <link rel="stylesheet" type="text/css" href="../js/easyui/themes/gray/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+    <script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+   
+</head>
+<body class="easyui-layout">
+    <div style="margin:20px 0;"></div>
+    <div data-options="region:'north'" style="height:10%"></div>
+        <div data-options="region:'west',split:true" title=" " style="width:15%">
+            <ul class="easyui-tree">
+		            <li>
+		                <span>菜单</span>
+		                <ul>
+		                    <li>
+		                        <span>系统管理</span>
+		                        <ul>
+		                            <li>
+		                                <a href="/touserlist.do"  target="content"><span>用户管理</span></a>
+		                            </li>
+		                            <li>
+		                                <span>角色管理</span>
+		                            </li>
+		                        </ul>
+		                    </li>
+		                </ul>
+		            </li>
+		        </ul>
+        </div>
+        <div data-options="region:'center',iconCls:'icon-ok'" >
+            <iframe name="content" frameBorder="0" border="0" marginheight=0 marginwidth=0 scrolling= "no" style="width: 100%; height: 99%;" noResize>
+            
+            </iframe>
+        </div>
+ 
+</body>
+</html>

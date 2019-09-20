@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>用户列表</title>
+    <link rel="stylesheet" type="text/css" href="../js/easyui/themes/gray/easyui.css">
+    <link rel="stylesheet" type="text/css" href="../js/easyui/themes/icon.css">
+    <script type="text/javascript" src="../js/easyui/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/easyui/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="../js/easyui/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="../js/easyui/jquery.form.js"></script>
+    <script type="text/javascript">
+    $(function(){   
+    	getTable();
+	});
+    function getTable(){
+    	$('#userGird').datagrid({
+		    url:"getAllUser.do",
+		    fitColumns: true,
+		    rownumbers: true,
+		    singleSelect: true,
+		    toolbar:'#u_toolbar',
+		    pagination:true,//设置是否分页
+		    pageList:[10,20,30,50],
+		    pageSize:20,
+		    sortName:"name",
+		    remoteSort:false,
+		    //双击事件  
+	        onDblClickRow: function (index, row) {
+	            UserInfoDialog(row.id);
+	        },
+		    columns: [[  
+                        { title: '', field: '', checkbox:true, width: 100 },
+			            { title: '用户名', field: 'name', width: 100,sortable:true,
+                        	 sorter:function(a,b){  
+                        		return (a>b?1:-1);   
+						     } 
+                        },
+			            { title: '性别', field: 'sex', width: 60,
+			            	formatter: function(value,row,index){
+			            		var str="";
+			            		if(value=="男"){
+			            			str="<img src='../images/nans.png' style='width: 20px;height: 20px;'>";
+			            		}else{
+			            			str="<img src='../images/nvs.png' style='width: 20px;height: 20px;'>";
+			            		}
+			            		return str;
+		                    }
+			            },  
+			            { title: '邮箱', field: 'email', width: 100},  
+			            { title: 'QQ', field: 'qq', width: 100},  
+			            { title: '微信', field: 'weixin', width: 100},  
+			            { title: '注册日期', field: 'regtime', width: 100},  
+			            { title: '是否启用', field: 'enable', width: 100,
+			            	formatter: function(value,row,index){
+			            		return value=="1"?"已启用":"未启用"
+			                }
+			            },
+			            { title: '附件', field: 'filepath', width: 100,
+			            	formatter: function(value,row,index){
+			            		return " <a href=\"javascript:downloadFile('"+row.id+"')\">"+value+"</a>  ";
+			                }
+			            },
+			            { title: '操作', field: 'id', width: 100,
+			            	formatter: function(value,row,index){
+			            		var str = "";
+			            		str +="  <a href=\"javascript:loadRoleAuthority('"+value+"')\">角色配置</a>  ";
+			            		return str;
+			    			}
+						}
+			            
+			        ]]
+		});
+    }
+    //查询用户
+	function searchUser() {
+		var sname=$("#s_username").textbox('getValue');
+		var url="../getAllUser.do";
+		$('#userGird').datagrid({
+			url:url,
+			queryParams:{"qname":sname}
+		});
+	 }
+	//重置查询条件
+	function reSet() {
+		$("#s_username").textbox('setValue',"");
+	}
+	
+	//打开添加用户的dialog
+	function openAddUserDialog(){
+		$('#addOrUpdateForm').form('clear');
+		$('#enable').combobox('select',"1");
+		$("input[name='sex'][value='男']").prop("checked",true);
+		$("#yhzp").attr('src',"../images/mrtx.jpg");
+		$('#addOrUpdateDialog').dialog('open').dialog('setTitle', '新增用户');
+	}
+	//表单保存按钮调用的方法
+	function submitForm(){
+		$('#addOrUpdateForm').form('submit',{
+			onSubmit:function(){
+				return $(this).form('enableValidation').form('validate');
+			},    
+		    success:function(){    
+		    	saveOrUpdateUser();
+		    }
+		});
+	}
+	
+	//保存添加、修改内容
+	function saveOrUpdateUser() {
+		//上传附件需要用jquery.form中的ajaxSubmit方法
+		$('#addOrUpdateForm').ajaxSubmit({
+	        type: "POST",
+	        url:"../saveOrUpdateUser.do",
+	        dataType : 'text',
+	        success: function(data){
+	        	if(1==data){
+	        		$.messager.alert('提示', '操作成功', 'info');
+	        		$('#addOrUpdateDialog').dialog('close');
+	        		$('#userGird').datagrid('reload'); 
+	        	}else{
+	        		$.messager.alert('提示', '操作失败', 'info');
+	        	}
+	        },
+	        error: function(e,a,b){
+	        	$.messager.alert('提示', '操作失败', 'error');
+	        }
+	    });
+	}
+	//打开修改窗口
+	function updateUserDialog(userId){
+		$('#addOrUpdateForm').form('clear');
+		var ids="";
+		var rows=$("#userGird").datagrid("getChecked");
+		if(rows[0]==null || rows[0]==undefined){
+			$.messager.alert('提示', '请选择要修改的数据!', 'info');
+			return ;
+		}
+		ids=rows[0].id;
+		$.ajax({
+	        type: "POST",
+	        url: "../getObjectById.do",
+	        data: {"id":ids},
+	        dataType : 'json',
+	        success: function(data){
+	        	$("#u_id").val(data.id);
+	        	$("#u_name").textbox('setValue',data.name);
+	        	$("#u_password").textbox('setValue',data.password);
+	        	if (data.sex == "男") {
+	               $("input[name='sex'][value='男']").prop("checked",true); 
+	            }else if(data.sex == "女"){
+	               $("input[name='sex'][value='女']").prop("checked",true); 
+	            }
+	        	$("#regtime").datebox('setValue',data.regtime);
+	        	$("#email").textbox('setValue',data.email);
+	        	$("#qq").textbox('setValue',data.qq);
+	        	$("#weixin").textbox('setValue',data.weixin);
+	        	$("#enable").combobox('setValue',data.enable);
+	        	if(data.filepath!="" && data.filepath!=null){
+	        		$("#yhzp").attr('src',"../downloadFile.do?c="+new Date()+"&id="+data.id);
+	        	}else{
+	        		$("#yhzp").attr('src',"../images/mrtx.jpg");
+	        	}
+	        	$('#addOrUpdateDialog').dialog('open').dialog('setTitle', '修改用户');
+	        },
+	        error: function(e){
+	        	$.messager.alert('提示', '操作失败', 'error');
+	        }
+	    });
+		
+		
+		
+	}
+	//打开查看窗口
+	function UserInfoDialog(userId){
+		$('#infoForm').form('clear');
+		$.ajax({
+	        type: "POST",
+	        url: "../getObjectById.do",
+	        data: {"id":userId},
+	        dataType : 'json',
+	        success: function(data){
+	        	$("#s_name").html(data.name);
+	        	$("#s_sex").html(data.sex);
+	        	$("#s_regtime").html(data.regtime.substring(0,10));
+	        	$("#s_email").html(data.email);
+	        	$("#s_qq").html(data.qq);
+	        	$("#s_weixin").html(data.weixin);
+	        	$("#s_enable").html(data.enable=="1"?"已启用":"未启用");
+	        	if(data.filepath!="" && data.filepath!=null){
+	        		$("#s_yhzp").attr('src',"../downloadFile.do?c="+new Date()+"&id="+userId);
+	        	}else{
+	        		$("#s_yhzp").attr('src',"../images/mrtx.jpg");
+	        	}
+	        	$('#infoDialog').dialog('open').dialog('setTitle', '用户信息');
+	        },
+	        error: function(e){
+	        	$.messager.alert('提示', '操作失败', 'error');
+	        }
+	    });
+	}
+	//删除用户
+	function deleteUser(userId){
+		var ids="";
+		var rows=$("#userGird").datagrid("getChecked");
+	   
+		if(rows[0]==null || rows[0]==undefined){
+			$.messager.alert('提示', '请选择要删除的数据!', 'info');
+			return ;
+		}
+		ids=rows[0].id;
+		$.ajax({
+	        type: "POST",
+	        url: "../deleteUser.do",
+	        data: {"id":ids},
+	        dataType : 'text',
+	        success: function(data){
+	        	if(data==1){
+	        		$.messager.alert('提示', '操作成功', 'info');
+		        	$('#userGird').datagrid('reload'); 
+	        	}
+	        },
+	        error: function(e){
+	        	$.messager.alert('提示', '操作失败', 'error');
+	        }
+	    });
+	}
+	//下载附件
+	function downloadFile(id){
+		window.location.href="../downloadFile.do?id="+id;
+	}
+	
+	//导出excel
+	function exportExcel(){
+		var sname=$("#s_username").textbox('getValue');
+	    /* $.post(path+"/user/exportExcel.do",{'name':sname},function(result){
+	    	if(result="1"){
+	    		$.messager.alert('提示', '操作成功', 'info');
+	    	}else{
+	    		$.messager.alert('提示', '操作失败', 'error');
+	    	}
+	    },"text"); */
+		window.location.href="../exportExcel.do?name="+encodeURI(encodeURI(sname));
+	}
+    </script>
+</head>
+<body class="easyui-layout">
+    <div  data-options="region:'center'" style="height: 100%">
+        <div id="u_toolbar">
+	        <label>用户名:</label> <input id="s_username" name="s_username" class="easyui-textbox">
+	        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-search" onclick="searchUser()">查询</a>
+	        <a href="javascript:reSet();" class="easyui-linkbutton" iconCls="icon-clear">重置</a>
+	        <a shiro:hasPermission="user:add" href="javascript:openAddUserDialog()" class="easyui-linkbutton" iconCls="icon-add">增加</a>
+	        <a shiro:hasPermission="user:del" href="javascript:deleteUser()" class="easyui-linkbutton" iconCls="icon-remove">删除</a>
+	        <a shiro:hasPermission="user:edit" href="javascript:updateUserDialog()" class="easyui-linkbutton" iconCls="icon-edit">修改</a>
+	        <a href="javascript:exportExcel()" class="easyui-linkbutton" iconCls="icon-redo">导出EXCEL</a>
+		</div>
+	    <!-- 定义数据列表 -->
+	    <div  id="userGird" style="height:100%"></div >
+	</div>
+	<!-- 添加/修改对话框 -->
+	<div id="addOrUpdateDialog" class="easyui-dialog" style="width: 460px; height: 440px; padding: 30px 20px" closed="true">
+		<form id="addOrUpdateForm" method="POST" enctype="multipart/form-data">
+			<input type="hidden" id="u_id" name="id"/>
+			<div  style="position: relative;">
+				<div style="height: 30px;">
+					<label>用户姓名:</label> <input id="u_name" name="name" class="easyui-textbox" required="true"/>
+				</div>
+				<div style="height: 30px;">
+					<label>用户密码:</label> <input id="u_password" name="password" class="easyui-textbox" required="true"/>
+				</div>
+				<div style="height: 30px;">
+					<label>用户性别:</label>
+					<input id="sex" type="radio" name="sex" class="easyui-validatebox" value="男"><label>男</label></input>
+					<input id="sex" type="radio" name="sex" class="easyui-validatebox" value="女"><label>女</label></input>
+				</div>
+				<div style="height: 30px;">
+					<label>入职时间:</label> <input id="regtime" name="regtime" class="easyui-datebox"/>
+				</div>
+				<div style="height: 30px;">
+					<label>Email:&nbsp;&nbsp;&nbsp;&nbsp;</label> <input id="email" name="email" class="easyui-textbox" validType="email"/>
+				</div>
+				<div style="height: 30px;">
+				<label>用户  QQ:</label> <input id="qq" name="qq"  class="easyui-textbox" />
+			</div>
+			</div>
+			<div style="position: relative;margin:-180px 0 0 260px;">
+			  <img id="yhzp" alt="用户照片" src="images/mrtx.jpg" style="width: 130px;height: 180px;"/>
+			</div>
+			
+			<div style="height: 30px;">
+				<label>用户微信:</label> <input id="weixin" name="weixin" class="easyui-textbox"/>
+			</div>
+			<div style="height: 30px;">
+				<label>是否启用:</label>
+				<select id="enable" name="enable" class="easyui-combobox" panelHeight="auto" >
+					<option  value="1">已启用</option>
+					<option  value="0">未启用</option>
+				</select>
+			</div>
+			<div style="height: 30px;">
+				<label>用户照片:</label>
+				<input   name="userfile" size="40" class="easyui-filebox" data-options="prompt:'资料...'" />
+			</div>
+		</form>
+		<div style="margin: 20px 20px 10px 80px;">
+			<a href="javascript:submitForm()" class="easyui-linkbutton" iconCls="icon-save" >保存</a>
+			<a href="javascript:dialogClose()" class="easyui-linkbutton" iconCls="icon-clear">取消</a>
+		</div>
+	</div>
+	
+	<!-- 详细信息对话框 -->
+	<div id="infoDialog" class="easyui-dialog" style="width: 370px; height: 400px; padding: 30px 20px" closed="true">
+		<form id="infoForm" >
+			<div  style="float: left;">
+				<div style="height: 30px;">
+					<label>用户姓名:</label> <span id="s_name"></span>
+				</div>
+				<div style="height: 30px;">
+					<label>用户性别:</label><span id="s_sex"></span>
+				</div>
+				<div style="height: 30px;">
+					<label>入职时间:</label><span id="s_regtime"></span>
+				</div>
+				<div style="height: 30px;">
+					<label>Email:&nbsp;&nbsp;&nbsp;&nbsp;</label><span id="s_email"></span> 
+				</div>
+				<div style="height: 30px;">
+				   <label>用户  QQ:</label> <span id="s_qq"></span>
+			    </div>
+			</div>
+			<div style="float: right; width: 130px;height: 180px;">
+			  <img id="s_yhzp" alt="用户照片" src="images/mrtx.jpg" style="width: 130px;height: 180px;">
+			</div>
+			<div style="height: 30px;float: left;margin: 0px 130px 0px 0px;">
+				<label>用户微信:</label> <span id="s_weixin"></span>
+			</div>
+			<div style="height: 30px;float: left;margin: 0px 130px 0px 0px;">
+				<label>是否启用:</label> <span id="s_enable"></span>
+			</div>
+		</form>
+	</div>
+</body>
+</html>
